@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Service;
 using static Service.ToDo;
@@ -28,7 +26,7 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IReadOnlyList<ToDoItem>> Get()
         {
-            using var call = _todo.ListItems(new ListRequest());
+            using var call = _todo.List(new Google.Protobuf.WellKnownTypes.Empty());
 
             var result = new List<ToDoItem>();
 
@@ -36,30 +34,37 @@ namespace WebAPI.Controllers
             {
                 result.Add(new ToDoItem
                 {
+                    Id = Guid.Parse(response.Id),
                     Title = response.Title,
-                    Description = response.Description,
                     DueDate = response.DueDate.ToDateTimeOffset(),
-                    Tags = response.Tags.ToArray()
+                    IsDone = response.IsDone
                 });
             }
 
             return result;
         }
 
+        [HttpGet("{id}")]
+        public async Task<ToDoItem> Get(Guid id)
+        {
+            var response = await _todo.GetAsync(new IdRequest { Id = id.ToString()  });
+
+            return new ToDoItem
+            {
+                Id = Guid.Parse(response.Id),
+                Title = response.Title,
+                DueDate = response.DueDate.ToDateTimeOffset(),
+                IsDone = response.IsDone,
+                Description = response.Description,
+                Tags = response.Tags.ToArray(),
+                InsertedOn = response.InsertedOn.ToDateTimeOffset()
+            };
+        }
+
         [HttpPost]
         public async Task Post(Service.ToDoItem item)
         {
-            await _todo.AddItemAsync(new AddRequest{ Item = item });
-        }
-    }
-
-    [ApiController, Route("[controller]")]
-    public class DebugController : ControllerBase
-    {
-        [HttpGet]
-        public IEnumerable<string> Get([FromServices] IConfiguration configuration)
-        {
-            return configuration.AsEnumerable().Select(item => $"{item.Key}={item.Value}");
+            await _todo.AddAsync(new ItemRequest { Item = item });
         }
     }
 }

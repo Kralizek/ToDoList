@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using AutoFixture;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using Service;
 using static Service.ToDo;
-using static Service.ToDoItem.Types;
 
 namespace ConsoleClient
 {
@@ -12,26 +12,37 @@ namespace ConsoleClient
     {
         static async Task Main(string[] args)
         {
-            var channel = GrpcChannel.ForAddress("https://localhost:5001");
+            var channel = GrpcChannel.ForAddress("https://localhost:55482");
 
             var client = new ToDoClient(channel);
 
-            var item = new ToDoItem
+            var fixture = CreateFixture();
+
+            foreach (var item in fixture.CreateMany<ToDoItem>(10))
             {
-                Title = "My first item",
-                Description = "Hello world",
-                DueDate = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow.AddDays(7)),
-                Priority = Priority.Highest
-            };
+                var result = await client.AddAsync(new ItemRequest
+                {
+                    Item = item
+                });
 
-            item.Tags.Add("No idea");
+                Console.WriteLine($"Added {item.Title}.");
+                Console.WriteLine($"\tDue date on {item.DueDate}");
+                Console.WriteLine();
+            }
+        }
 
-            await client.AddItemAsync(new AddRequest
-            {
-                Item = item
-            });
+        static IFixture CreateFixture()
+        {
+            var fixture = new Fixture();
 
-            Console.WriteLine("Hello World!");
+            fixture.Customize<ToDoItem>(c => c
+                .Without(p => p.Id)
+                .Without(p => p.InsertedOn)
+                .With(p => p.IsDone, false)
+                .With(p => p.DueDate, (DateTimeOffset dto) => Timestamp.FromDateTimeOffset(dto))
+                .Do(item => fixture.AddManyTo(item.Tags)));
+
+            return fixture;
         }
     }
 }

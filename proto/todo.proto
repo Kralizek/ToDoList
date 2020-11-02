@@ -4,50 +4,59 @@ option csharp_namespace = "Service";
 
 package toDo;
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 service ToDo
 {
-	rpc AddItem (.toDo.AddRequest) returns (.toDo.AddReply);
+	rpc Add (.toDo.ItemRequest) returns (.toDo.Result);
 
-	rpc ListItems (.toDo.ListRequest) returns (stream .toDo.ToDoItem);
+	rpc List (google.protobuf.Empty) returns (stream .toDo.ToDoItem);
+
+	rpc Get (.toDo.IdRequest) returns (.toDo.ToDoItem);
+
+	rpc Remove (.toDo.IdRequest) returns (.toDo.Result);
+
+	rpc Update (.toDo.ToDoItem) returns (.toDo.Result);
 }
 
 message ToDoItem
 {
-	int32 id = 1;
+	string id = 1;
 	string title = 2;
 	string description = 3;
 	google.protobuf.Timestamp due_date = 4;
-	Priority priority = 5;
+	.toDo.Priority priority = 5;
 	repeated string tags = 6;
+	bool isDone = 7;
+	google.protobuf.Timestamp inserted_on = 8;
+}
 
-	enum Priority
+enum Priority
+{
+	Lowest = 0;
+	Low = 1;
+	Normal = 2;
+	High = 3;
+	Highest = 4;
+}
+
+message Result
+{
+	Response response = 1;
+
+	enum Response
 	{
-		Lowest = 0;
-		Low = 1;
-		Normal = 2;
-		High = 3;
-		Highest = 4;
+		OK = 0;
+		ERROR = 1;
 	}
 }
 
-message AddRequest
+message IdRequest
+{
+	string id = 1;
+}
+
+message ItemRequest
 {
 	.toDo.ToDoItem item = 1;
-}
-
-message AddReply
-{
-	.toDo.Response response = 1;
-}
-
-enum Response
-{
-	Ok = 0;
-	Error = 1;
-}
-
-message ListRequest
-{
-
 }
