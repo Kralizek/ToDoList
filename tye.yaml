@@ -1,0 +1,16 @@
+# tye application configuration file
+# read all about it at https://github.com/dotnet/tye
+#
+# when you've given us a try, we'd love to know what you think:
+#    https://aka.ms/AA7q20u
+#
+name: todolist
+services:
+- name: service
+  project: src/Service/Service.csproj
+  bindings:
+    - protocol: https
+- name: webapi
+  project: src/WebAPI/WebAPI.csproj
+  bindings:
+    - protocol: https
