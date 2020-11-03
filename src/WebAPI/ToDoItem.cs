@@ -14,8 +14,8 @@ namespace WebAPI
 
         public DateTimeOffset DueDate { get; set; }
         
-        public bool IsDone { get; internal set; }
+        public bool IsDone { get; set; }
         
-        public DateTimeOffset InsertedOn { get; internal set; }
+        public DateTimeOffset InsertedOn { get; set; }
     }
 }

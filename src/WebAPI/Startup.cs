@@ -1,4 +1,5 @@
 using System;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -24,9 +25,10 @@ namespace WebAPI
 
             services.AddGrpcClient<ToDo.ToDoClient>(o =>
             {
-                //o.Address = new Uri("https://localhost:5001"); 
                 o.Address = Configuration.GetServiceUri("service");
             });
+
+            services.AddAutoMapper(typeof(Startup));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

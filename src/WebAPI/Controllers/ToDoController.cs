@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -16,11 +17,13 @@ namespace WebAPI.Controllers
     {
         private readonly ILogger<ToDoController> _logger;
         private readonly ToDoClient _todo;
+        private readonly IMapper _mapper;
 
-        public ToDoController (ToDoClient todo, ILogger<ToDoController> logger)
+        public ToDoController (ToDoClient todo, IMapper mapper, ILogger<ToDoController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _todo = todo ?? throw new ArgumentNullException(nameof(todo));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         [HttpGet]
@@ -32,13 +35,7 @@ namespace WebAPI.Controllers
 
             await foreach (var response in call.ResponseStream.ReadAllAsync())
             {
-                result.Add(new ToDoItem
-                {
-                    Id = Guid.Parse(response.Id),
-                    Title = response.Title,
-                    DueDate = response.DueDate.ToDateTimeOffset(),
-                    IsDone = response.IsDone
-                });
+                result.Add(_mapper.Map<Service.ToDoItem, ToDoItem>(response));
             }
 
             return result;
@@ -49,22 +46,31 @@ namespace WebAPI.Controllers
         {
             var response = await _todo.GetAsync(new IdRequest { Id = id.ToString()  });
 
-            return new ToDoItem
-            {
-                Id = Guid.Parse(response.Id),
-                Title = response.Title,
-                DueDate = response.DueDate.ToDateTimeOffset(),
-                IsDone = response.IsDone,
-                Description = response.Description,
-                Tags = response.Tags.ToArray(),
-                InsertedOn = response.InsertedOn.ToDateTimeOffset()
-            };
+            return _mapper.Map<Service.ToDoItem, ToDoItem>(response);
         }
 
         [HttpPost]
-        public async Task Post(Service.ToDoItem item)
+        public async Task Post(ToDoItem item)
         {
-            await _todo.AddAsync(new ItemRequest { Item = item });
+            var itemToAdd = _mapper.Map<ToDoItem, Service.ToDoItem>(item);
+
+            await _todo.AddAsync(new ItemRequest { Item = itemToAdd });
+        }
+
+        [HttpPost("{id}")]
+        public async Task Post(Guid id, ToDoItem item)
+        {
+            item.Id = id;
+
+            var itemToUpdate = _mapper.Map<ToDoItem, Service.ToDoItem>(item);
+
+            await _todo.UpdateAsync(itemToUpdate);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task Delete(Guid id)
+        {
+            await _todo.RemoveAsync(new IdRequest { Id = id.ToString() });
         }
     }
 }
