@@ -1,0 +1,38 @@
+﻿@page
+@model Web.Pages.AddModel
+@{
+    ViewData["Title"] = "Add new item";
+}
+
+<h4>ToDo</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Item.Title" class="control-label"></label>
+                <input asp-for="Item.Title" class="form-control" />
+                <span asp-validation-for="Item.Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Item.Description" class="control-label"></label>
+                <input asp-for="Item.Description" class="form-control" />
+                <span asp-validation-for="Item.Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Item.Priority" class="control-label"></label>
+                <input asp-for="Item.Priority" class="form-control" />
+                <span asp-validation-for="Item.Priority" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Item.DueDate" class="control-label"></label>
+                <input asp-for="Item.DueDate" class="form-control" />
+                <span asp-validation-for="Item.DueDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Add" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>

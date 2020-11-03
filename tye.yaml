@@ -15,3 +15,8 @@ services:
   project: src/WebAPI/WebAPI.csproj
   bindings:
     - protocol: https
+- name: web
+  project: src/Web/Web.csproj
+  bindings:
+    - protocol: https
+      port: 8080
