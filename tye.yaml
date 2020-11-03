@@ -11,12 +11,41 @@ services:
   bindings:
     - protocol: https
       port: 23123
+  env:
+    - name: AWS_PROFILE
+      value: todo
+    - name: AWS_REGION
+      value: eu-north-1
 - name: webapi
   project: src/WebAPI/WebAPI.csproj
   bindings:
     - protocol: https
+  env:
+    - name: AWS_PROFILE
+      value: todo
+    - name: AWS_REGION
+      value: eu-north-1
 - name: web
   project: src/Web/Web.csproj
   bindings:
     - protocol: https
       port: 8080
+  env:
+    - name: AWS_PROFILE
+      value: todo
+    - name: AWS_REGION
+      value: eu-north-1
+- name: xray
+  dockerFile: containers/xray/Dockerfile
+  args: "-o"
+  bindings:
+    - port: 2000
+      protocol: udp
+  env:
+    - name: AWS_PROFILE
+      value: todo
+    - name: AWS_REGION
+      value: eu-north-1
+  volumes:
+    - source: C:\Users\Renato\.aws\
+      target: /root/.aws

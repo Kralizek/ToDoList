@@ -1,4 +1,7 @@
 using System;
+using Amazon.XRay.Recorder.Core;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using Amazon.XRay.Recorder.Handlers.System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -13,6 +16,9 @@ namespace WebAPI
     {
         public Startup(IConfiguration configuration)
         {
+            AWSXRayRecorder.InitializeInstance(configuration);
+            AWSSDKHandler.RegisterXRayForAllServices();
+
             Configuration = configuration;
         }
 
@@ -23,10 +29,12 @@ namespace WebAPI
         {
             services.AddControllers();
 
+            services.AddTransient<HttpClientXRayTracingHandler>();
+
             services.AddGrpcClient<ToDo.ToDoClient>(o =>
             {
                 o.Address = Configuration.GetServiceUri("service");
-            });
+            }).AddHttpMessageHandler<HttpClientXRayTracingHandler>();
 
             services.AddAutoMapper(typeof(Startup));
         }
@@ -40,6 +48,8 @@ namespace WebAPI
             }
 
             app.UseHttpsRedirection();
+
+            app.UseXRay("ToDo:WebAPI");
 
             app.UseRouting();
 

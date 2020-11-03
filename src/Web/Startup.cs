@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon.XRay.Recorder.Core;
+using Amazon.XRay.Recorder.Handlers.AwsSdk;
+using Amazon.XRay.Recorder.Handlers.System.Net;
 using Kralizek.Extensions.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -16,6 +19,9 @@ namespace Web
     {
         public Startup(IConfiguration configuration)
         {
+            AWSXRayRecorder.InitializeInstance(configuration);
+            AWSSDKHandler.RegisterXRayForAllServices();
+
             Configuration = configuration;
         }
 
@@ -26,12 +32,16 @@ namespace Web
         {
             services.AddRazorPages();
 
+            services.AddTransient<HttpClientXRayTracingHandler>();
+
             services.AddHttpRestClient("backend", builder => 
             {
                 builder.ConfigureHttpClient(http => 
                 {
                     http.BaseAddress = Configuration.GetServiceUri("webapi");
                 });
+
+                builder.AddHttpMessageHandler<HttpClientXRayTracingHandler>();
             });
         }
 
@@ -51,6 +61,8 @@ namespace Web
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            app.UseXRay("ToDo:Web");
 
             app.UseRouting();
 
