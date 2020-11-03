@@ -28,6 +28,8 @@ namespace Service
 
             var newId = Guid.NewGuid();
 
+            request.Item.InsertedOn = Timestamp.FromDateTimeOffset(DateTimeOffset.UtcNow);
+
             await _storage.AddAsync(newId, request.Item);
 
             return new Result { Response = Service.Result.Types.Response.Ok };
