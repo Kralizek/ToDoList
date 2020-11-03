@@ -10,6 +10,7 @@ services:
   project: src/Service/Service.csproj
   bindings:
     - protocol: https
+      port: 23123
 - name: webapi
   project: src/WebAPI/WebAPI.csproj
   bindings:

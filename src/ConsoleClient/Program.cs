@@ -12,7 +12,7 @@ namespace ConsoleClient
     {
         static async Task Main(string[] args)
         {
-            var channel = GrpcChannel.ForAddress("https://localhost:55482");
+            var channel = GrpcChannel.ForAddress("https://localhost:23123");
 
             var client = new ToDoClient(channel);
 
@@ -20,7 +20,7 @@ namespace ConsoleClient
 
             foreach (var item in fixture.CreateMany<ToDoItem>(10))
             {
-                var result = await client.AddAsync(new ItemRequest
+                _ = await client.AddAsync(new ItemRequest
                 {
                     Item = item
                 });
