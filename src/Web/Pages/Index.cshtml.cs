@@ -25,11 +25,15 @@ namespace Web.Pages
 
         public async Task OnGetAsync()
         {
+            _logger.LogInformation("Fetching all items");
+
             Items = await _http.SendAsync<IList<ToDoItem>>(HttpMethod.Get, "/todo");
         }
 
         public async Task<IActionResult> OnPostMarkAsDone(Guid id)
         {
+            _logger.LogInformation("Marking item {ID} as done", id);
+
             var item = await _http.SendAsync<ToDoItem>(HttpMethod.Get, $"/todo/{id}");
 
             item.IsDone = true;
@@ -41,6 +45,8 @@ namespace Web.Pages
 
         public async Task<IActionResult> OnPostDelete(Guid id)
         {
+            _logger.LogInformation("Deleting item {ID}", id);
+
             await _http.SendAsync(HttpMethod.Delete, $"/todo/{id}");
 
             return RedirectToPage("./Index");

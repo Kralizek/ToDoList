@@ -6,36 +6,43 @@ using System.Threading.Tasks;
 using Kralizek.Extensions.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
-namespace Web.Pages
+namespace Web.Pages 
 {
-    public class AddModel : PageModel
+    public class AddModel : PageModel 
     {
         private readonly IHttpRestClient _http;
+        private readonly ILogger<AddModel> _logger;
 
-        public AddModel(IHttpRestClient http)
+        public AddModel (IHttpRestClient http, ILogger<AddModel> logger) 
         {
-            _http = http ?? throw new ArgumentNullException(nameof(http));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _http = http ?? throw new ArgumentNullException (nameof (http));
         }
 
         [BindProperty]
         public ToDoItem Item { get; set; }
 
-        public void OnGet()
+        public void OnGet () 
         {
-            Item = new ToDoItem();
+            Item = new ToDoItem ();
         }
 
-        public async Task<IActionResult> OnPostAsync()
+        public async Task<IActionResult> OnPostAsync () 
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) 
             {
-                return Page();
+                _logger.LogWarning("Model state is not valid");
+
+                return Page ();
             }
 
-            await _http.SendAsync(HttpMethod.Post, "/todo", Item);
+            _logger.LogInformation("Creating new item");
 
-            return RedirectToPage("./Index");
+            await _http.SendAsync (HttpMethod.Post, "/todo", Item);
+
+            return RedirectToPage ("./Index");
         }
     }
 }

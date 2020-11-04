@@ -30,9 +30,12 @@
             <td>@item.InsertedOn</td>
             <td>@item.IsDone</td>
             <td>
+            @if (!item.IsDone) 
+            {
                 <form asp-page-handler="MarkAsDone" asp-route-id="@item.Id" method="post">
                     <button class="btn btn-default">Mark as done</button>
                 </form>
+            }
             </td>
             <td>
                 <form asp-page-handler="Delete" asp-route-id="@item.Id" method="post">
