@@ -16,6 +16,8 @@ services:
       value: todo
     - name: AWS_REGION
       value: eu-north-1
+    - name: AWS_XRAY_DAEMON_ADDRESS
+      value: xray-daemon:2000
 - name: webapi
   project: src/WebAPI/WebAPI.csproj
   bindings:
@@ -25,6 +27,8 @@ services:
       value: todo
     - name: AWS_REGION
       value: eu-north-1
+    - name: AWS_XRAY_DAEMON_ADDRESS
+      value: xray-daemon:2000
 - name: web
   project: src/Web/Web.csproj
   bindings:
@@ -35,8 +39,10 @@ services:
       value: todo
     - name: AWS_REGION
       value: eu-north-1
-- name: xray
-  dockerFile: containers/xray/Dockerfile
+    - name: AWS_XRAY_DAEMON_ADDRESS
+      value: xray-daemon:2000
+- name: xray-daemon
+  image: amazon/aws-xray-daemon
   args: "-o"
   bindings:
     - port: 2000
@@ -49,3 +55,5 @@ services:
   volumes:
     - source: C:\Users\Renato\.aws\
       target: /root/.aws
+
+# docker run --rm --attach STDOUT -v C:\Users\Renato\.aws\:/root/.aws:ro -e AWS_REGION=eu-north-1 -e AWS_PROFILE=todo --name xray-daemon -p 2000:2000/udp amazon/aws-xray-daemon -o

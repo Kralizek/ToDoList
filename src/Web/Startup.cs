@@ -20,6 +20,7 @@ namespace Web
         public Startup(IConfiguration configuration)
         {
             AWSXRayRecorder.InitializeInstance(configuration);
+            AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
             AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
