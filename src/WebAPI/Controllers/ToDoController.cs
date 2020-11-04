@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Grpc.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Service;
-using static Service.ToDo;
+using WebAPI.Services;
 
 namespace WebAPI.Controllers
 {
@@ -16,10 +15,10 @@ namespace WebAPI.Controllers
     public class ToDoController : ControllerBase
     {
         private readonly ILogger<ToDoController> _logger;
-        private readonly ToDoClient _todo;
+        private readonly IToDoClient _todo;
         private readonly IMapper _mapper;
 
-        public ToDoController (ToDoClient todo, IMapper mapper, ILogger<ToDoController> logger)
+        public ToDoController (IToDoClient todo, IMapper mapper, ILogger<ToDoController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _todo = todo ?? throw new ArgumentNullException(nameof(todo));
@@ -29,6 +28,8 @@ namespace WebAPI.Controllers
         [HttpGet]
         public async Task<IReadOnlyList<ToDoItem>> Get()
         {
+            _logger.LogInformation("Fetching all items");
+
             using var call = _todo.List(new Google.Protobuf.WellKnownTypes.Empty());
 
             var result = new List<ToDoItem>();
@@ -44,6 +45,8 @@ namespace WebAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ToDoItem> Get(Guid id)
         {
+            _logger.LogInformation("Fetching item {ID}", id);
+
             var response = await _todo.GetAsync(new IdRequest { Id = id.ToString()  });
 
             return _mapper.Map<Service.ToDoItem, ToDoItem>(response);
@@ -52,6 +55,8 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task Post(ToDoItem item)
         {
+            _logger.LogInformation("Adding new item");
+
             var itemToAdd = _mapper.Map<ToDoItem, Service.ToDoItem>(item);
 
             await _todo.AddAsync(new ItemRequest { Item = itemToAdd });
@@ -60,6 +65,8 @@ namespace WebAPI.Controllers
         [HttpPost("{id}")]
         public async Task Post(Guid id, ToDoItem item)
         {
+            _logger.LogInformation("Updating item {ID}", id);
+
             item.Id = id;
 
             var itemToUpdate = _mapper.Map<ToDoItem, Service.ToDoItem>(item);
@@ -70,6 +77,8 @@ namespace WebAPI.Controllers
         [HttpDelete("{id}")]
         public async Task Delete(Guid id)
         {
+            _logger.LogInformation("Deleting item {ID}", id);
+
             await _todo.RemoveAsync(new IdRequest { Id = id.ToString() });
         }
     }

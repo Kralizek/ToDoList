@@ -32,6 +32,8 @@ namespace WebAPI
 
             services.AddTransient<HttpClientXRayTracingHandler>();
 
+            services.AddTransient<Services.IToDoClient>(sp => sp.GetRequiredService<ToDo.ToDoClient>());
+
             services.AddGrpcClient<ToDo.ToDoClient>(o =>
             {
                 o.Address = Configuration.GetServiceUri("service");
