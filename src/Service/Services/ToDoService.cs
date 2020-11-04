@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Service
 {
-
     public class ToDoService : ToDo.ToDoBase 
     {
         private readonly ILogger<ToDoService> _logger;
