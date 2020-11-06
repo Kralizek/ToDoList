@@ -7,7 +7,7 @@
 name: todolist
 services:
 - name: service
-  project: src/Service/Service.csproj
+  project: src/resource-access/Service/Service.csproj
   bindings:
     - protocol: https
       port: 23123
@@ -19,7 +19,7 @@ services:
     - name: AWS_XRAY_DAEMON_ADDRESS
       value: xray-daemon:2000
 - name: webapi
-  project: src/WebAPI/WebAPI.csproj
+  project: src/entrypoints/WebAPI/WebAPI.csproj
   bindings:
     - protocol: https
   env:
@@ -30,7 +30,7 @@ services:
     - name: AWS_XRAY_DAEMON_ADDRESS
       value: xray-daemon:2000
 - name: web
-  project: src/Web/Web.csproj
+  project: src/clients/Web/Web.csproj
   bindings:
     - protocol: https
       port: 8080
