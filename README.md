@@ -22,14 +22,14 @@ The architecture of this application is willingly overshot.
 
 The application has multiple layers:
 - Clients
-  - ASP.NET Core 3.1 Web application using Razor pages
+  - ASP.NET Core 3.1 Web application using Razor pages ✔
   - Web application using Blazor WebAssembly
   - Web application using Angular
   - CLI using new System.CommandLine libraries
 - Entrypoint
-  - ASP.NET Core 3.1 Web API
+  - ASP.NET Core 3.1 Web API ✔
 - Resource Access
-  - ASP.NET Core 3.1 GRPC service
+  - ASP.NET Core 3.1 GRPC service ✔
 - Storage
   - Data storage using DynamoDB
 - Infrastructure
