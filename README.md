@@ -35,6 +35,9 @@ The application has multiple layers:
 - Infrastructure
   - IdentityServer
   
+The basic idea is that clients should contact the entrypoint using simple HTTP rest calls.
+Everything past the entrypoint would use GRPC messages to communicate.
+
 ## How to run it
 
 This project uses Tye to tie together all the pieces of the system.
