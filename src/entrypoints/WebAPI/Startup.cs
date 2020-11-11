@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.OpenApi.Models;
 using Service;
 
 namespace WebAPI
@@ -30,6 +31,11 @@ namespace WebAPI
         {
             services.AddControllers();
 
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "ToDoList", Version = "v1" });
+            });
+
             services.AddTransient<HttpClientXRayTracingHandler>();
 
             services.AddTransient<Services.IToDoClient>(sp => sp.GetRequiredService<ToDo.ToDoClient>());
@@ -48,6 +54,8 @@ namespace WebAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseSwagger();
+                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ToDoList v1"));
             }
 
             app.UseHttpsRedirection();

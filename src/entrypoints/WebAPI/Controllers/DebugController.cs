@@ -9,6 +9,7 @@ namespace WebAPI.Controllers
     [Route("[controller]")]
     public class DebugController : ControllerBase
     {
+        [HttpGet]
         public IEnumerable<string> Get([FromServices] IConfiguration configuration)
         {
             return configuration.AsEnumerable().Select(item => $"{item.Key}={item.Value}");
