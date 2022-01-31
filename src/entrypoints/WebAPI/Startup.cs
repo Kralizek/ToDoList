@@ -1,7 +1,8 @@
 using System;
-using Amazon.XRay.Recorder.Core;
-using Amazon.XRay.Recorder.Handlers.AwsSdk;
-using Amazon.XRay.Recorder.Handlers.System.Net;
+using System.Collections.Generic;
+// using Amazon.XRay.Recorder.Core;
+// using Amazon.XRay.Recorder.Handlers.AwsSdk;
+// using Amazon.XRay.Recorder.Handlers.System.Net;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,6 +10,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Resources;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Trace;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Service;
 
 namespace WebAPI
@@ -17,9 +23,9 @@ namespace WebAPI
     {
         public Startup(IConfiguration configuration)
         {
-            AWSXRayRecorder.InitializeInstance(configuration);
-            AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
-            AWSSDKHandler.RegisterXRayForAllServices();
+            // AWSXRayRecorder.InitializeInstance(configuration);
+            // AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
+            // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
         }
@@ -36,14 +42,45 @@ namespace WebAPI
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ToDoList", Version = "v1" });
             });
 
-            services.AddTransient<HttpClientXRayTracingHandler>();
+            // services.AddTransient<HttpClientXRayTracingHandler>();
 
             services.AddTransient<Services.IToDoClient>(sp => sp.GetRequiredService<ToDo.ToDoClient>());
 
             services.AddGrpcClient<ToDo.ToDoClient>(o =>
             {
                 o.Address = Configuration.GetServiceUri("service");
-            }).AddHttpMessageHandler<HttpClientXRayTracingHandler>();
+            })
+            // .AddHttpMessageHandler<HttpClientXRayTracingHandler>()
+            ;
+
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.AddXRayTraceId();
+
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("WebAPI").AddDetector(new AWSECSResourceDetector()));
+
+                builder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.RecordException = true;
+
+                    // options.Enrich = (activity, eventName, rawObject) => {
+                        
+                    // };
+                });
+
+                builder.AddGrpcClientInstrumentation(options =>
+                {
+                    // needed because of AddHttpClientInstrumentation
+                    options.SuppressDownstreamInstrumentation = true;
+                });
+
+                builder.AddHttpClientInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                });
+
+                builder.AddConsoleExporter();
+            });
 
             services.AddAutoMapper(typeof(Startup));
         }
@@ -60,7 +97,7 @@ namespace WebAPI
 
             app.UseHttpsRedirection();
 
-            app.UseXRay("ToDo:WebAPI");
+            // app.UseXRay("ToDo:WebAPI");
 
             app.UseRouting();
 

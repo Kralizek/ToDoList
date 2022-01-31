@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon.XRay.Recorder.Core;
-using Amazon.XRay.Recorder.Handlers.AwsSdk;
+// using Amazon.XRay.Recorder.Core;
+// using Amazon.XRay.Recorder.Handlers.AwsSdk;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Service
 {
@@ -17,9 +19,9 @@ namespace Service
     {
         public Startup(IConfiguration configuration)
         {
-            AWSXRayRecorder.InitializeInstance(configuration);
-            AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
-            AWSSDKHandler.RegisterXRayForAllServices();
+            // AWSXRayRecorder.InitializeInstance(configuration);
+            // AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
+            // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
         }
@@ -33,6 +35,29 @@ namespace Service
             services.AddGrpc();
 
             services.AddSingleton<IStorage, InMemoryStorage>();
+
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Service"));
+
+                builder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                });
+
+                builder.AddGrpcClientInstrumentation(options =>
+                {
+                    // needed because of AddHttpClientInstrumentation
+                    options.SuppressDownstreamInstrumentation = true;
+                });
+
+                builder.AddHttpClientInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                });
+
+                builder.AddConsoleExporter();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,7 +68,7 @@ namespace Service
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseXRay("ToDo:Service");
+            // app.UseXRay("ToDo:Service");
 
             app.UseRouting();
 

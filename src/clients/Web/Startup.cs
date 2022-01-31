@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon.XRay.Recorder.Core;
-using Amazon.XRay.Recorder.Handlers.AwsSdk;
-using Amazon.XRay.Recorder.Handlers.System.Net;
+// using Amazon.XRay.Recorder.Core;
+// using Amazon.XRay.Recorder.Handlers.AwsSdk;
+// using Amazon.XRay.Recorder.Handlers.System.Net;
 using Kralizek.Extensions.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Web
 {
@@ -19,9 +21,9 @@ namespace Web
     {
         public Startup(IConfiguration configuration)
         {
-            AWSXRayRecorder.InitializeInstance(configuration);
-            AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
-            AWSSDKHandler.RegisterXRayForAllServices();
+            // AWSXRayRecorder.InitializeInstance(configuration);
+            // AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
+            // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
         }
@@ -33,7 +35,7 @@ namespace Web
         {
             services.AddRazorPages();
 
-            services.AddTransient<HttpClientXRayTracingHandler>();
+            // services.AddTransient<HttpClientXRayTracingHandler>();
 
             services.AddHttpRestClient("backend", builder => 
             {
@@ -42,7 +44,28 @@ namespace Web
                     http.BaseAddress = Configuration.GetServiceUri("webapi");
                 });
 
-                builder.AddHttpMessageHandler<HttpClientXRayTracingHandler>();
+                // builder.AddHttpMessageHandler<HttpClientXRayTracingHandler>();
+            });
+
+            services.AddOpenTelemetryTracing(builder =>
+            {
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Web"));
+
+                builder.AddAspNetCoreInstrumentation(options =>
+                {
+                    options.RecordException = true;
+
+                    // options.Enrich = (activity, eventName, rawObject) => {
+                        
+                    // };
+                });
+
+                builder.AddHttpClientInstrumentation(options =>
+                {
+                    options.RecordException = true;
+                });
+
+                builder.AddConsoleExporter();
             });
         }
 
@@ -63,7 +86,7 @@ namespace Web
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseXRay("ToDo:Web");
+            // app.UseXRay("ToDo:Web");
 
             app.UseRouting();
 

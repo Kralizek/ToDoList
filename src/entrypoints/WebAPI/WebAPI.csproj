@@ -7,11 +7,18 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
-    <PackageReference Include="AWSXRayRecorder" Version="2.9.0" />
+    <!-- <PackageReference Include="AWSXRayRecorder" Version="2.9.0" /> -->
     <PackageReference Include="Grpc.AspNetCore" Version="2.23.2" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.33.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
-    <PackageReference Include="Microsoft.Tye.Extensions.Configuration" Version="0.4.0-*" />
+    <PackageReference Include="Microsoft.Tye.Extensions.Configuration" Version="0.11.0-*" />
+
+    <PackageReference Include="OpenTelemetry.Contrib.Extensions.AWSXRay" Version="1.1.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.2.0-rc1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc8" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc8" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.0.0-rc8" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.0.0-rc8" />
   </ItemGroup>
 
   <ItemGroup>
