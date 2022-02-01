@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-// using Amazon.XRay.Recorder.Core;
-// using Amazon.XRay.Recorder.Handlers.AwsSdk;
-// using Amazon.XRay.Recorder.Handlers.System.Net;
+using System.Diagnostics;
 using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -21,13 +18,10 @@ namespace WebAPI
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
-            // AWSXRayRecorder.InitializeInstance(configuration);
-            // AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
-            // AWSSDKHandler.RegisterXRayForAllServices();
-
-            Configuration = configuration;
+            Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            HostEnvironment = hostEnvironment ?? throw new ArgumentNullException(nameof(hostEnvironment));
 
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -35,6 +29,8 @@ namespace WebAPI
         }
 
         public IConfiguration Configuration { get; }
+
+        public IHostEnvironment HostEnvironment { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -46,56 +42,40 @@ namespace WebAPI
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "ToDoList", Version = "v1" });
             });
 
-            // services.AddTransient<HttpClientXRayTracingHandler>();
-
             services.AddTransient<Services.IToDoClient>(sp => sp.GetRequiredService<ToDo.ToDoClient>());
 
-            services.AddGrpcClient<ToDo.ToDoClient>(o =>
-            {
-                o.Address = Configuration.GetServiceUri("service");
-            })
-            // .AddHttpMessageHandler<HttpClientXRayTracingHandler>()
-            ;
+            services.AddGrpcClient<ToDo.ToDoClient>(o => o.Address = Configuration.GetServiceUri("service"));
 
             services.AddOpenTelemetryTracing(builder =>
             {
                 builder.AddXRayTraceId();
 
                 builder.SetResourceBuilder(ResourceBuilder.CreateDefault()
-                                                            .AddService("WebAPI")
-                                                            .AddDetector(new AWSECSResourceDetector())
-                                                            .AddTelemetrySdk()
-                                                            .AddEnvironmentVariableDetector());
+                                                          .AddService("WebAPI")
+                                                          .AddDetector(new AWSECSResourceDetector())
+                                                          .AddTelemetrySdk()
+                                                          .AddEnvironmentVariableDetector());
 
 
                 builder.AddAspNetCoreInstrumentation(options =>
                 {
                     options.RecordException = true;
 
-                    // options.Enrich = (activity, eventName, rawObject) => {
-                        
-                    // };
+                    options.Enrich = (activity, eventName, rawObject) =>
+                    {
+                        activity.SetTag("environment", HostEnvironment.EnvironmentName);
+
+                        activity.SetTag("project", "ToDoList");
+                    };
                 });
 
-                builder.AddGrpcClientInstrumentation(options =>
-                {
-                    // needed because of AddHttpClientInstrumentation
-                    options.SuppressDownstreamInstrumentation = true;
-                });
+                builder.AddGrpcClientInstrumentation();
 
-                builder.AddHttpClientInstrumentation(options =>
-                {
-                    options.RecordException = true;
-                });
+                builder.AddHttpClientInstrumentation(options => options.RecordException = true);
 
                 builder.AddConsoleExporter();
 
-                builder.AddOtlpExporter(options => 
-                {
-                    // options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
-
-                    options.Endpoint = Configuration.GetServiceUri("otel");
-                });
+                builder.AddOtlpExporter(options => options.Endpoint = Configuration.GetServiceUri("otel"));
             });
 
             services.AddAutoMapper(typeof(Startup));
@@ -112,8 +92,6 @@ namespace WebAPI
             }
 
             app.UseHttpsRedirection();
-
-            // app.UseXRay("ToDo:WebAPI");
 
             app.UseRouting();
 

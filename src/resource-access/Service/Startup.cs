@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-// using Amazon.XRay.Recorder.Core;
-// using Amazon.XRay.Recorder.Handlers.AwsSdk;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -20,13 +15,10 @@ namespace Service
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment environment)
         {
-            // AWSXRayRecorder.InitializeInstance(configuration);
-            // AWSXRayRecorder.RegisterLogger(Amazon.LoggingOptions.Console);
-            // AWSSDKHandler.RegisterXRayForAllServices();
-
-            Configuration = configuration;
+            Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            HostEnvironment = environment ?? throw new ArgumentNullException(nameof(environment));
 
             AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
 
@@ -35,6 +27,8 @@ namespace Service
 
         public IConfiguration Configuration { get; }
 
+        public IHostEnvironment HostEnvironment { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
@@ -42,6 +36,8 @@ namespace Service
             services.AddGrpc();
 
             services.AddSingleton<IStorage, InMemoryStorage>();
+
+            // services.AddSingleton<IStorage, DynamoDBTableStorage>();
 
             services.AddOpenTelemetryTracing(builder =>
             {
@@ -56,27 +52,22 @@ namespace Service
                 builder.AddAspNetCoreInstrumentation(options =>
                 {
                     options.RecordException = true;
+
+                    options.Enrich = (activity, _, _) =>
+                    {
+                        activity.SetTag("environment", HostEnvironment.EnvironmentName);
+
+                        activity.SetTag("project", "ToDoList");
+                    };
                 });
 
-                builder.AddGrpcClientInstrumentation(options =>
-                {
-                    // needed because of AddHttpClientInstrumentation
-                    options.SuppressDownstreamInstrumentation = true;
-                });
+                builder.AddGrpcClientInstrumentation();
 
-                builder.AddHttpClientInstrumentation(options =>
-                {
-                    options.RecordException = true;
-                });
+                builder.AddHttpClientInstrumentation(options => options.RecordException = true);
 
                 builder.AddConsoleExporter();
 
-                builder.AddOtlpExporter(options => 
-                {
-                    // options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
-
-                    options.Endpoint = Configuration.GetServiceUri("otel");
-                });
+                builder.AddOtlpExporter(options => options.Endpoint = Configuration.GetServiceUri("otel"));
             });
         }
 
@@ -87,8 +78,6 @@ namespace Service
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            // app.UseXRay("ToDo:Service");
 
             app.UseRouting();
 

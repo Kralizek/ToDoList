@@ -9,6 +9,7 @@ exporters:
     loglevel: info
   awsxray:
     region: eu-north-1
+    indexed_attributes: ["project", "environment"]
   awsemf:
     region: eu-north-1
 
