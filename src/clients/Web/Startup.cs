@@ -12,6 +12,9 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Resources;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -26,6 +29,10 @@ namespace Web
             // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
         }
 
         public IConfiguration Configuration { get; }
@@ -35,21 +42,24 @@ namespace Web
         {
             services.AddRazorPages();
 
-            // services.AddTransient<HttpClientXRayTracingHandler>();
-
             services.AddHttpRestClient("backend", builder => 
             {
                 builder.ConfigureHttpClient(http => 
                 {
                     http.BaseAddress = Configuration.GetServiceUri("webapi");
                 });
-
-                // builder.AddHttpMessageHandler<HttpClientXRayTracingHandler>();
             });
 
             services.AddOpenTelemetryTracing(builder =>
             {
-                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Web"));
+                builder.AddXRayTraceId();
+
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+                                                            .AddService("Web")
+                                                            .AddDetector(new AWSECSResourceDetector())
+                                                            .AddTelemetrySdk()
+                                                            .AddEnvironmentVariableDetector());
+
 
                 builder.AddAspNetCoreInstrumentation(options =>
                 {
@@ -66,6 +76,13 @@ namespace Web
                 });
 
                 builder.AddConsoleExporter();
+
+                builder.AddOtlpExporter(options => 
+                {
+                    // options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
+
+                    options.Endpoint = Configuration.GetServiceUri("otel");
+                });
             });
         }
 

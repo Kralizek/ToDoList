@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OpenTelemetry;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Resources;
+using OpenTelemetry.Contrib.Extensions.AWSXRay.Trace;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -24,6 +27,10 @@ namespace Service
             // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
         }
 
         public IConfiguration Configuration { get; }
@@ -38,7 +45,13 @@ namespace Service
 
             services.AddOpenTelemetryTracing(builder =>
             {
-                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("Service"));
+                builder.AddXRayTraceId();
+
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+                                                            .AddService("Service")
+                                                            .AddDetector(new AWSECSResourceDetector())
+                                                            .AddTelemetrySdk()
+                                                            .AddEnvironmentVariableDetector());
 
                 builder.AddAspNetCoreInstrumentation(options =>
                 {
@@ -57,6 +70,13 @@ namespace Service
                 });
 
                 builder.AddConsoleExporter();
+
+                builder.AddOtlpExporter(options => 
+                {
+                    // options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
+
+                    options.Endpoint = Configuration.GetServiceUri("otel");
+                });
             });
         }
 

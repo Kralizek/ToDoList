@@ -28,6 +28,10 @@ namespace WebAPI
             // AWSSDKHandler.RegisterXRayForAllServices();
 
             Configuration = configuration;
+
+            AppContext.SetSwitch("System.Net.Http.SocketsHttpHandler.Http2UnencryptedSupport", true);
+
+            Sdk.SetDefaultTextMapPropagator(new AWSXRayPropagator());
         }
 
         public IConfiguration Configuration { get; }
@@ -57,7 +61,12 @@ namespace WebAPI
             {
                 builder.AddXRayTraceId();
 
-                builder.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("WebAPI").AddDetector(new AWSECSResourceDetector()));
+                builder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+                                                            .AddService("WebAPI")
+                                                            .AddDetector(new AWSECSResourceDetector())
+                                                            .AddTelemetrySdk()
+                                                            .AddEnvironmentVariableDetector());
+
 
                 builder.AddAspNetCoreInstrumentation(options =>
                 {
@@ -80,6 +89,13 @@ namespace WebAPI
                 });
 
                 builder.AddConsoleExporter();
+
+                builder.AddOtlpExporter(options => 
+                {
+                    // options.Endpoint = new Uri(Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"));
+
+                    options.Endpoint = Configuration.GetServiceUri("otel");
+                });
             });
 
             services.AddAutoMapper(typeof(Startup));

@@ -10,50 +10,28 @@ services:
   project: src/resource-access/Service/Service.csproj
   bindings:
     - protocol: https
-      port: 23123
-  env:
-    - name: AWS_PROFILE
-      value: todo
-    - name: AWS_REGION
-      value: eu-north-1
-    - name: AWS_XRAY_DAEMON_ADDRESS
-      value: xray-daemon:2000
 - name: webapi
   project: src/entrypoints/WebAPI/WebAPI.csproj
   bindings:
     - protocol: https
-  env:
-    - name: AWS_PROFILE
-      value: todo
-    - name: AWS_REGION
-      value: eu-north-1
-    - name: AWS_XRAY_DAEMON_ADDRESS
-      value: xray-daemon:2000
 - name: web
   project: src/clients/Web/Web.csproj
   bindings:
     - protocol: https
       port: 8080
+- name: otel
+  image: amazon/aws-otel-collector:latest
+  args: --config /config/collector-config-local.yml
+  volumes:
+    - source: ./data/otel
+      target: /config
+    - source: ./.awscredentials
+      target: /root/.aws/credentials
+  bindings:
+    - protocol: http
+      containerPort: 4317
   env:
-    - name: AWS_PROFILE
-      value: todo
     - name: AWS_REGION
       value: eu-north-1
-    - name: AWS_XRAY_DAEMON_ADDRESS
-      value: xray-daemon:2000
-# - name: xray-daemon
-#   image: amazon/aws-xray-daemon
-#   args: "-o"
-#   bindings:
-#     - port: 2000
-#       protocol: udp
-#   env:
-#     - name: AWS_PROFILE
-#       value: todo
-#     - name: AWS_REGION
-#       value: eu-north-1
-#   volumes:
-#     - source: C:\Users\Renato\.aws\
-#       target: /root/.aws
 
 # docker run --rm --attach STDOUT -v C:\Users\Renato\.aws\:/root/.aws:ro -e AWS_REGION=eu-north-1 -e AWS_PROFILE=todo --name xray-daemon -p 2000:2000/udp amazon/aws-xray-daemon -o
