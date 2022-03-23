@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -9,9 +9,10 @@
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.0" />
     <PackageReference Include="AWSXRayRecorder" Version="2.9.0" />
     <PackageReference Include="Grpc.AspNetCore" Version="2.23.2" />
-    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.33.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
     <PackageReference Include="Microsoft.Tye.Extensions.Configuration" Version="0.4.0-*" />
+
+    <PackageReference Include="InsightArchitectures.Extensions.AspNetCore.Grpc.ChannelConfiguration" Version="1.1.0" />
   </ItemGroup>
 
   <ItemGroup>

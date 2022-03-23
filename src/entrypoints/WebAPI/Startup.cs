@@ -11,6 +11,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Service;
 
+using Grpc.Net.Client.Configuration;
+using RetryPolicy = Grpc.Net.Client.Configuration.RetryPolicy;
+using Grpc.Core;
+
 namespace WebAPI
 {
     public class Startup
@@ -43,7 +47,15 @@ namespace WebAPI
             services.AddGrpcClient<ToDo.ToDoClient>(o =>
             {
                 o.Address = Configuration.GetServiceUri("service");
-            }).AddHttpMessageHandler<HttpClientXRayTracingHandler>();
+            }).AddHttpMessageHandler<HttpClientXRayTracingHandler>()
+            .SetFallbackRetryPolicy(new RetryPolicy
+            {
+                MaxAttempts = 5,
+                InitialBackoff = TimeSpan.FromSeconds(1),
+                MaxBackoff = TimeSpan.FromSeconds(5),
+                BackoffMultiplier = 1.5,
+                RetryableStatusCodes = { StatusCode.Unavailable }
+            });
 
             services.AddAutoMapper(typeof(Startup));
         }
